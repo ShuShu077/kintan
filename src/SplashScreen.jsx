@@ -13,7 +13,7 @@ const splashStyles = `
   }
 
   @keyframes shockwave {
-    0%   { transform: scale(0.5); opacity: 0.8; }
+    0%   { transform: scale(0.5); opacity: 0.6; }
     100% { transform: scale(3.5); opacity: 0; }
   }
 
@@ -46,7 +46,7 @@ const splashStyles = `
 
   .splash-wrap {
     position: fixed; inset: 0; z-index: 9999;
-    background: #0A0A0A;
+    background: #ffffff;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     overflow: hidden;
@@ -60,15 +60,15 @@ const splashStyles = `
   .bg-grid {
     position: absolute; inset: 0;
     background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,85,0,0.05) 40px),
-      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,85,0,0.05) 40px);
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,85,0,0.06) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,85,0,0.06) 40px);
     animation: bgPulse 2s ease-in-out infinite;
   }
 
   .scanline {
     position: absolute; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255,85,0,0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,85,0,0.2), transparent);
     animation: scanline 2s linear infinite;
   }
 
@@ -81,7 +81,7 @@ const splashStyles = `
   .emoji {
     font-size: 80px;
     animation: flexPulse 1.2s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px rgba(255,85,0,0.6));
+    filter: drop-shadow(0 0 16px rgba(255,85,0,0.3));
     position: relative; z-index: 2;
   }
 
@@ -89,7 +89,7 @@ const splashStyles = `
     position: absolute;
     width: 80px; height: 80px;
     border-radius: 50%;
-    border: 2px solid rgba(255, 85, 0, 0.6);
+    border: 2px solid rgba(255, 85, 0, 0.4);
     animation: shockwave 1.2s ease-out infinite;
   }
   .wave:nth-child(2) { animation-delay: 0.4s; }
@@ -105,19 +105,19 @@ const splashStyles = `
     font-size: 72px;
     font-weight: 900;
     line-height: 1;
-    background: linear-gradient(135deg, #FF5500 0%, #FFD600 100%);
+    background: linear-gradient(135deg, #FF5500 0%, #FF8C00 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     opacity: 0;
     animation: letterDrop 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-    filter: drop-shadow(0 0 30px rgba(255,85,0,0.4));
+    filter: drop-shadow(0 2px 8px rgba(255,85,0,0.2));
   }
 
   .tagline {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 11px;
     font-weight: 900;
-    color: #555;
+    color: #999999;
     letter-spacing: 4px;
     text-transform: uppercase;
     opacity: 0;
@@ -128,7 +128,7 @@ const splashStyles = `
     margin-top: 48px;
     width: 120px;
     height: 2px;
-    background: #1A1A1A;
+    background: #E5E5E5;
     border-radius: 2px;
     overflow: hidden;
     opacity: 0;
@@ -137,7 +137,7 @@ const splashStyles = `
 
   .bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #FF5500, #FFD600);
+    background: linear-gradient(90deg, #FF5500, #FF8C00);
     border-radius: 2px;
     transition: width 0.05s linear;
   }
@@ -199,17 +199,11 @@ export default function SplashScreen({ onFinish }) {
           ))}
         </div>
 
-        <div
-          className="tagline"
-          style={{ animationDelay: "0.9s" }}
-        >
+        <div className="tagline" style={{ animationDelay: "0.9s" }}>
           筋トレ計測アプリ
         </div>
 
-        <div
-          className="bar-wrap"
-          style={{ animationDelay: "0.8s" }}
-        >
+        <div className="bar-wrap" style={{ animationDelay: "0.8s" }}>
           <div className="bar-fill" style={{ width: `${progress}%` }} />
         </div>
       </div>
