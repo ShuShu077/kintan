@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import SplashScreen from "./SplashScreen";
 
 // ===================== CONSTANTS =====================
 const EXERCISE_MENU = {
@@ -398,6 +399,7 @@ ${nutriStr ? `【栄養摂取】${nutriStr}` : ""}
 
 // ===================== MAIN APP =====================
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [currentDate, setCurrentDate] = useState(todayStr());
   const [dayData, setDayData] = useState({ exercises: [], nutrition: { protein: "", fat: "", calories: "" } });
 
@@ -427,6 +429,10 @@ export default function App() {
     persist({ ...dayData, exercises: dayData.exercises.filter((_, idx) => idx !== i) });
   };
   const updateNutrition = (nutrition) => persist({ ...dayData, nutrition });
+
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
 
   const d = new Date(currentDate);
   const isToday = currentDate === todayStr();
