@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import SplashScreen from "./SplashScreen";
+import { HomeIcon, CalendarIcon, MealIcon, WorkoutIcon, SettingsIcon } from "./Icons";
 
 // ===================== CONSTANTS =====================
 const EXERCISE_MENU = {
@@ -577,11 +578,11 @@ function SettingsTab() {
 
 // ===================== BOTTOM NAV =====================
 const NAV_ITEMS = [
-  { key:"home",     icon:"🏠", label:"ホーム" },
-  { key:"calendar", icon:"📅", label:"カレンダー" },
-  { key:"meals",    icon:"🍽️", label:"食事" },
-  { key:"workout",  icon:"💪", label:"筋トレ" },
-  { key:"settings", icon:"⚙️", label:"設定" },
+  { key:"home",     Icon: HomeIcon,     label:"ホーム" },
+  { key:"calendar", Icon: CalendarIcon, label:"カレンダー" },
+  { key:"meals",    Icon: MealIcon,     label:"食事" },
+  { key:"workout",  Icon: WorkoutIcon,  label:"筋トレ" },
+  { key:"settings", Icon: SettingsIcon, label:"設定" },
 ];
 
 // ===================== MAIN APP =====================
@@ -630,7 +631,7 @@ export default function App() {
               flex:1, border:"none", background:"none", cursor:"pointer",
               display:"flex", flexDirection:"column", alignItems:"center", gap:2, padding:"4px 0",
             }}>
-              <span style={{ fontSize:22 }}>{item.icon}</span>
+              <item.Icon size={26} color={activeTab === item.key ? "#FF5500" : "#ccc"} />
               <span style={{ fontSize:10, fontWeight:activeTab===item.key?700:400,
                 color:activeTab===item.key?"#FF5500":"#ccc" }}>{item.label}</span>
             </button>
