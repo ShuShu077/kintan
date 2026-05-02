@@ -12,472 +12,631 @@ const EXERCISE_MENU = {
 };
 
 const CATEGORY_COLORS = {
-  "胸": "#FF5500", "背中": "#00C4FF", "脚": "#FFD600",
-  "肩": "#B14AFF", "腕": "#00FF88", "体幹": "#FF3D7F",
-};
-
-const todayStr = () => new Date().toISOString().slice(0, 10);
-
-// ===================== STORAGE HELPERS (localStorage) =====================
-function loadDay(dateStr) {
-  try {
-    const raw = localStorage.getItem(`kintan:${dateStr}`);
-    return raw ? JSON.parse(raw) : { exercises: [], nutrition: { protein: "", fat: "", calories: "" } };
-  } catch {
-    return { exercises: [], nutrition: { protein: "", fat: "", calories: "" } };
-  }
-}
-function saveDay(dateStr, data) {
-  try { localStorage.setItem(`kintan:${dateStr}`, JSON.stringify(data)); } catch {}
-}
-
-// ===================== STYLES =====================
-const styles = {
-  app: {
-    minHeight: "100vh",
-    background: "#0A0A0A",
-    color: "#F0EDE8",
-    fontFamily: "'Noto Sans JP', 'Helvetica Neue', sans-serif",
-    backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,85,0,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,85,0,0.04) 40px)`,
-  },
-  header: {
-    borderBottom: "2px solid #FF5500",
-    padding: "16px 24px",
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    background: "rgba(10,10,10,0.95)",
-    position: "sticky", top: 0, zIndex: 100,
-  },
-  logo: {
-    fontSize: "28px", fontWeight: 900, letterSpacing: "-1px",
-    background: "linear-gradient(135deg, #FF5500 0%, #FFD600 100%)",
-    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-  },
-  tagline: { fontSize: "10px", color: "#888", letterSpacing: "3px", textTransform: "uppercase" },
-  main: { maxWidth: "720px", margin: "0 auto", padding: "24px 16px", display: "flex", flexDirection: "column", gap: "20px" },
-  dateBar: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    background: "#141414", border: "1px solid #222", borderRadius: "12px", padding: "12px 16px",
-  },
-  dateBtn: {
-    background: "transparent", border: "1px solid #333", borderRadius: "8px", color: "#888",
-    padding: "6px 14px", cursor: "pointer", fontSize: "18px", transition: "all 0.15s",
-  },
-  dateDisplay: { textAlign: "center" },
-  dateMain: { fontSize: "22px", fontWeight: 700, letterSpacing: "-0.5px" },
-  dateWeekday: { fontSize: "11px", color: "#FF5500", letterSpacing: "2px", textTransform: "uppercase" },
-  card: {
-    background: "#141414", border: "1px solid #222", borderRadius: "16px", overflow: "hidden",
-  },
-  cardHeader: {
-    padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
-    borderBottom: "1px solid #1A1A1A",
-  },
-  cardTitle: { fontSize: "13px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "#888" },
-  cardBody: { padding: "16px 20px" },
-  nutritionGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" },
-  nutriBox: {
-    background: "#0D0D0D", borderRadius: "12px", padding: "12px 14px",
-    border: "1px solid #1E1E1E", display: "flex", flexDirection: "column", gap: "6px",
-  },
-  nutriLabel: { fontSize: "10px", color: "#666", letterSpacing: "2px", textTransform: "uppercase" },
-  nutriInput: {
-    background: "transparent", border: "none", outline: "none",
-    color: "#F0EDE8", fontSize: "24px", fontWeight: 700, width: "100%",
-    letterSpacing: "-1px",
-  },
-  nutriUnit: { fontSize: "11px", color: "#444" },
-  catGrid: { display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" },
-  catBtn: (color, active) => ({
-    padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: 700,
-    cursor: "pointer", transition: "all 0.15s",
-    background: active ? color : "transparent",
-    border: `1px solid ${color}`,
-    color: active ? "#0A0A0A" : color,
-    letterSpacing: "1px",
-  }),
-  exList: { display: "flex", flexDirection: "column", gap: "8px" },
-  exItem: (color) => ({
-    display: "flex", alignItems: "center", gap: "10px",
-    background: "#0D0D0D", borderRadius: "10px", padding: "10px 14px",
-    border: `1px solid ${color}22`, cursor: "pointer",
-    transition: "all 0.15s",
-  }),
-  exDot: (color) => ({
-    width: "8px", height: "8px", borderRadius: "50%", background: color, flexShrink: 0,
-  }),
-  exName: { fontSize: "13px", fontWeight: 600, flex: 1 },
-  selectedList: { display: "flex", flexDirection: "column", gap: "10px" },
-  selectedItem: (color) => ({
-    background: `${color}11`, border: `1px solid ${color}33`,
-    borderRadius: "12px", padding: "12px 16px",
-    borderLeft: `3px solid ${color}`,
-  }),
-  selectedHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" },
-  selectedName: { fontSize: "13px", fontWeight: 700 },
-  removeBtn: {
-    background: "transparent", border: "none", color: "#444",
-    cursor: "pointer", fontSize: "16px", padding: "0",
-  },
-  setGrid: { display: "grid", gridTemplateColumns: "auto 1fr 1fr 1fr auto", gap: "6px", alignItems: "center" },
-  setLabel: { fontSize: "11px", color: "#555", width: "24px", textAlign: "center", fontWeight: 700 },
-  setInput: {
-    background: "#0A0A0A", border: "1px solid #222", borderRadius: "6px",
-    color: "#F0EDE8", fontSize: "13px", padding: "5px 8px", textAlign: "center",
-    outline: "none", width: "100%",
-  },
-  setHeaderLabel: { fontSize: "10px", color: "#444", textAlign: "center", letterSpacing: "1px" },
-  addSetBtn: {
-    background: "transparent", border: "1px dashed #333", borderRadius: "8px",
-    color: "#555", cursor: "pointer", padding: "6px", fontSize: "13px",
-    marginTop: "6px", width: "100%", transition: "all 0.15s",
-  },
-  analyzeBtn: (loading) => ({
-    width: "100%", padding: "16px", borderRadius: "12px",
-    background: loading ? "#1A1A1A" : "linear-gradient(135deg, #FF5500 0%, #FFD600 100%)",
-    border: "none", cursor: loading ? "not-allowed" : "pointer",
-    color: loading ? "#555" : "#0A0A0A", fontSize: "14px", fontWeight: 900,
-    letterSpacing: "3px", textTransform: "uppercase", transition: "all 0.2s",
-  }),
-  analysisBox: {
-    background: "#0D0D0D", border: "1px solid #1E1E1E", borderRadius: "12px",
-    padding: "16px", marginTop: "16px",
-  },
-  analysisSection: { marginBottom: "14px" },
-  analysisSectionTitle: (color) => ({
-    fontSize: "11px", fontWeight: 700, letterSpacing: "2px", color,
-    textTransform: "uppercase", marginBottom: "8px",
-    display: "flex", alignItems: "center", gap: "6px",
-  }),
-  analysisText: { fontSize: "13px", lineHeight: 1.7, color: "#C0BDB8" },
+  "胸": "#FF5500", "背中": "#3B82F6", "脚": "#F59E0B",
+  "肩": "#8B5CF6", "腕": "#10B981", "体幹": "#EC4899",
 };
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+const MONTHS = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+const todayStr = () => new Date().toISOString().slice(0, 10);
 
-// ===================== COMPONENTS =====================
+const GOAL_EXERCISES = {
+  "減量":   [["体幹","プランク"],["脚","スクワット"],["体幹","クランチ"]],
+  "筋肥大": [["胸","ベンチプレス"],["背中","デッドリフト"],["脚","レッグプレス"]],
+  "維持":   [["肩","ショルダープレス"],["腕","バーベルカール"],["背中","ラットプルダウン"]],
+};
 
-function NutritionCard({ nutrition, onChange }) {
-  const fields = [
-    { key: "protein", label: "タンパク質", unit: "g", color: "#00FF88" },
-    { key: "fat", label: "脂質", unit: "g", color: "#FFD600" },
-    { key: "calories", label: "カロリー", unit: "kcal", color: "#FF5500" },
-  ];
+// ===================== STORAGE =====================
+function store(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+function load(key, def) { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : def; } catch { return def; } }
+
+const defaultProfile = { name: "", age: "", height: "", weight: "", goal: "筋肥大", weeklyTarget: 3 };
+const defaultDay = () => ({
+  exercises: [],
+  meals: {
+    朝: { items: "", protein: "", fat: "", calories: "" },
+    昼: { items: "", protein: "", fat: "", calories: "" },
+    夜: { items: "", protein: "", fat: "", calories: "" },
+  }
+});
+
+// ===================== GLOBAL STYLES =====================
+const G = `
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #F5F4F0; font-family: 'Noto Sans JP', sans-serif; }
+  input, textarea, select { font-family: 'Noto Sans JP', sans-serif; }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  button { font-family: 'Noto Sans JP', sans-serif; }
+  @keyframes tabIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tab-in { animation: tabIn 0.25s ease forwards; }
+`;
+
+const sectionLabel = {
+  fontSize: 11, fontWeight: 700, color: "#999",
+  letterSpacing: 2, textTransform: "uppercase", marginBottom: 10,
+};
+
+// ===================== HOME =====================
+function HomeTab({ onNavigate }) {
+  const profile = load("kintan:profile", defaultProfile);
+  const d = new Date();
+  const hour = d.getHours();
+  const greeting = hour < 12 ? "おはようございます" : hour < 18 ? "こんにちは" : "お疲れ様です";
+  const displayName = profile.name || "トレーニーさん";
+  const goal = profile.goal || "筋肥大";
+  const recommended = GOAL_EXERCISES[goal] || GOAL_EXERCISES["筋肥大"];
+
+  const weekCount = [0,1,2,3,4,5,6].filter(i => {
+    const dd = new Date(); dd.setDate(dd.getDate() - i);
+    const ds = dd.toISOString().slice(0,10);
+    const data = load(`kintan:${ds}`, null);
+    return data && data.exercises && data.exercises.length > 0;
+  }).length;
+
   return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <span style={styles.cardTitle}>🥩 栄養摂取</span>
+    <div className="tab-in" style={{ padding: "24px 16px", paddingBottom: 100 }}>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 13, color: "#999", marginBottom: 2 }}>{greeting} 👋</div>
+        <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: -1 }}>{displayName}</div>
       </div>
-      <div style={styles.cardBody}>
-        <div style={styles.nutritionGrid}>
-          {fields.map(f => (
-            <div key={f.key} style={styles.nutriBox}>
-              <span style={styles.nutriLabel}>{f.label}</span>
-              <input
-                style={{ ...styles.nutriInput, color: f.color }}
-                type="number" placeholder="0" value={nutrition[f.key]}
-                onChange={e => onChange({ ...nutrition, [f.key]: e.target.value })}
-              />
-              <span style={styles.nutriUnit}>{f.unit}</span>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+        <div style={{ background: "#FF5500", borderRadius: 16, padding: 16, color: "#fff" }}>
+          <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4, letterSpacing: 1 }}>今週のトレ</div>
+          <div style={{ fontSize: 36, fontWeight: 900, lineHeight: 1 }}>{weekCount}</div>
+          <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>/ {profile.weeklyTarget}日 目標</div>
+        </div>
+        <div style={{ background: "#1A1A1A", borderRadius: 16, padding: 16, color: "#fff" }}>
+          <div style={{ fontSize: 11, opacity: 0.6, marginBottom: 4, letterSpacing: 1 }}>目標</div>
+          <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.2 }}>{goal}</div>
+          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 4 }}>
+            {profile.weight ? `${profile.weight}kg` : "体重未設定"}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ fontWeight: 900, fontSize: 16 }}>🎯 今日のおすすめ</div>
+          <button onClick={() => onNavigate("workout")} style={{
+            border: "none", background: "none", color: "#FF5500",
+            fontSize: 12, fontWeight: 700, cursor: "pointer"
+          }}>記録する →</button>
+        </div>
+        {recommended.map(([cat, name], i) => (
+          <div key={i} style={{ background: "#fff", borderRadius: 14, padding: "14px 16px",
+            display: "flex", alignItems: "center", gap: 12, marginBottom: 8,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            borderLeft: `4px solid ${CATEGORY_COLORS[cat]}` }}>
+            <div style={{ fontSize: 20 }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{name}</div>
+              <div style={{ fontSize: 11, color: CATEGORY_COLORS[cat], marginTop: 2 }}>{cat}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 12 }}>⚡ クイックアクション</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {[
+          { label: "食事を記録", icon: "🍽️", tab: "meals", bg: "#FFF8F0" },
+          { label: "カレンダー", icon: "📅", tab: "calendar", bg: "#F0F4FF" },
+        ].map(a => (
+          <button key={a.tab} onClick={() => onNavigate(a.tab)} style={{
+            background: a.bg, borderRadius: 14, padding: "18px 16px",
+            border: "none", cursor: "pointer", textAlign: "left",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          }}>
+            <div style={{ fontSize: 24, marginBottom: 6 }}>{a.icon}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#333" }}>{a.label}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===================== CALENDAR =====================
+function CalendarTab({ onSelectDate, selectedDate }) {
+  const [viewDate, setViewDate] = useState(new Date());
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  const today = new Date();
+
+  return (
+    <div className="tab-in" style={{ padding: "20px 16px", paddingBottom: 100 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <button onClick={() => setViewDate(new Date(year, month - 1, 1))}
+          style={{ border: "1px solid #E5E5E5", borderRadius: 10, background: "#fff",
+            width: 36, height: 36, cursor: "pointer", fontSize: 18 }}>‹</button>
+        <span style={{ fontWeight: 700, fontSize: 18 }}>{year}年 {MONTHS[month]}</span>
+        <button onClick={() => setViewDate(new Date(year, month + 1, 1))}
+          style={{ border: "1px solid #E5E5E5", borderRadius: 10, background: "#fff",
+            width: 36, height: 36, cursor: "pointer", fontSize: 18 }}>›</button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 8 }}>
+        {["日","月","火","水","木","金","土"].map((d,i) => (
+          <div key={d} style={{ textAlign: "center", fontSize: 11, fontWeight: 700,
+            color: i===0?"#EF4444":i===6?"#3B82F6":"#999", padding: "4px 0" }}>{d}</div>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 20 }}>
+        {cells.map((d, i) => {
+          if (!d) return <div key={i} />;
+          const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+          const isToday = d===today.getDate() && month===today.getMonth() && year===today.getFullYear();
+          const isSelected = dateStr === selectedDate;
+          const dow = (firstDay + d - 1) % 7;
+          const hasData = !!localStorage.getItem(`kintan:${dateStr}`);
+          return (
+            <button key={i} onClick={() => onSelectDate(dateStr)} style={{
+              borderRadius: 10, border: "none", padding: "10px 0", cursor: "pointer", position: "relative",
+              background: isSelected?"#FF5500":isToday?"#FFF0EB":"#fff",
+              color: isSelected?"#fff":dow===0?"#EF4444":dow===6?"#3B82F6":"#1A1A1A",
+              fontWeight: isToday||isSelected?700:400, fontSize: 14,
+              boxShadow: isSelected?"0 2px 8px rgba(255,85,0,0.3)":"0 1px 3px rgba(0,0,0,0.06)",
+            }}>
+              {d}
+              {hasData && <div style={{ position:"absolute", bottom:3, left:"50%", transform:"translateX(-50%)",
+                width:4, height:4, borderRadius:"50%", background:isSelected?"#fff":"#FF5500" }} />}
+            </button>
+          );
+        })}
+      </div>
+
+      {selectedDate && <DateDetail dateStr={selectedDate} />}
+    </div>
+  );
+}
+
+function DateDetail({ dateStr }) {
+  const data = load(`kintan:${dateStr}`, null);
+  const d = new Date(dateStr);
+  const label = `${d.getMonth()+1}月${d.getDate()}日 (${WEEKDAYS[d.getDay()]})`;
+  if (!data) return (
+    <div style={{ background: "#fff", borderRadius: 16, padding: 20, textAlign: "center",
+      boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div style={{ fontSize: 13, color: "#999" }}>{label} の記録はありません</div>
+    </div>
+  );
+  return (
+    <div style={{ background: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>{label}</div>
+      {data.exercises?.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={sectionLabel}>💪 筋トレ</div>
+          {data.exercises.map((ex, i) => (
+            <div key={i} style={{ fontSize: 13, color: "#444", padding: "6px 0",
+              borderBottom: "1px solid #F5F4F0", display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width:8,height:8,borderRadius:"50%",background:CATEGORY_COLORS[ex.category]||"#ccc" }} />
+              {ex.name}
+              <span style={{ marginLeft:"auto", color:"#999", fontSize:12 }}>{ex.sets?.length||0}セット</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {data.meals && Object.entries(data.meals).map(([meal, info]) =>
+        info.items ? (
+          <div key={meal} style={{ marginBottom: 10 }}>
+            <div style={sectionLabel}>{meal==="朝"?"🌅":meal==="昼"?"☀️":"🌙"} {meal}食</div>
+            <div style={{ fontSize: 13, color: "#444" }}>{info.items}</div>
+            {(info.protein||info.calories) && (
+              <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>
+                {info.protein&&`P:${info.protein}g `}{info.fat&&`F:${info.fat}g `}{info.calories&&`${info.calories}kcal`}
+              </div>
+            )}
+          </div>
+        ) : null
+      )}
+    </div>
+  );
+}
+
+// ===================== MEALS =====================
+function MealsTab({ dateStr }) {
+  const [meals, setMeals] = useState(() => load(`kintan:${dateStr}`, defaultDay()).meals);
+  const [activeM, setActiveM] = useState("朝");
+
+  useEffect(() => {
+    setMeals(load(`kintan:${dateStr}`, defaultDay()).meals);
+  }, [dateStr]);
+
+  const update = (mealKey, field, val) => {
+    const next = { ...meals, [mealKey]: { ...meals[mealKey], [field]: val } };
+    setMeals(next);
+    const d = load(`kintan:${dateStr}`, defaultDay());
+    store(`kintan:${dateStr}`, { ...d, meals: next });
+  };
+
+  const d = new Date(dateStr);
+
+  return (
+    <div className="tab-in" style={{ padding: "20px 16px", paddingBottom: 100 }}>
+      <div style={{ fontWeight: 900, fontSize: 22, marginBottom: 4 }}>🍽️ 食事記録</div>
+      <div style={{ fontSize: 13, color: "#999", marginBottom: 20 }}>
+        {d.getMonth()+1}月{d.getDate()}日
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        {[["朝","🌅"],["昼","☀️"],["夜","🌙"]].map(([m, icon]) => (
+          <button key={m} onClick={() => setActiveM(m)} style={{
+            flex: 1, padding: "10px 0", borderRadius: 12, border: "none", cursor: "pointer",
+            background: activeM===m?"#FF5500":"#fff",
+            color: activeM===m?"#fff":"#555",
+            fontWeight: 700, fontSize: 14,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)", transition: "all 0.15s",
+          }}>{icon} {m}食</button>
+        ))}
+      </div>
+
+      <div style={{ background: "#fff", borderRadius: 16, padding: 20,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 16 }}>
+        <div style={sectionLabel}>食べたもの</div>
+        <textarea value={meals[activeM].items} onChange={e => update(activeM,"items",e.target.value)}
+          placeholder={`${activeM}食に食べたものを入力...`}
+          style={{ width:"100%", border:"1px solid #E5E5E5", borderRadius:10, padding:"12px",
+            fontSize:14, resize:"none", height:100, outline:"none", lineHeight:1.6, marginBottom:16 }} />
+        <div style={sectionLabel}>栄養情報</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+          {[
+            { key:"protein", label:"タンパク質", unit:"g", color:"#10B981" },
+            { key:"fat",     label:"脂質",       unit:"g", color:"#F59E0B" },
+            { key:"calories",label:"カロリー",   unit:"kcal", color:"#FF5500" },
+          ].map(f => (
+            <div key={f.key} style={{ background:"#F9F9F7", borderRadius:10, padding:"10px 12px" }}>
+              <div style={{ fontSize:10, color:"#999", letterSpacing:1, marginBottom:4 }}>{f.label}</div>
+              <input type="number" placeholder="0" value={meals[activeM][f.key]}
+                onChange={e => update(activeM, f.key, e.target.value)}
+                style={{ border:"none", background:"transparent", width:"100%",
+                  fontSize:20, fontWeight:700, color:f.color, outline:"none" }} />
+              <div style={{ fontSize:10, color:"#ccc" }}>{f.unit}</div>
             </div>
           ))}
         </div>
       </div>
-    </div>
-  );
-}
 
-function ExerciseSet({ set, idx, onChange, onRemove }) {
-  return (
-    <div style={styles.setGrid}>
-      <span style={styles.setLabel}>{idx + 1}</span>
-      <input style={styles.setInput} type="number" placeholder="重量" value={set.weight}
-        onChange={e => onChange({ ...set, weight: e.target.value })} />
-      <input style={styles.setInput} type="number" placeholder="回数" value={set.reps}
-        onChange={e => onChange({ ...set, reps: e.target.value })} />
-      <input style={styles.setInput} type="number" placeholder="セット" value={set.sets}
-        onChange={e => onChange({ ...set, sets: e.target.value })} />
-      <button style={styles.removeBtn} onClick={onRemove}>×</button>
-    </div>
-  );
-}
-
-function SelectedExercise({ exercise, color, onUpdate, onRemove }) {
-  const addSet = () => onUpdate({ ...exercise, sets: [...exercise.sets, { weight: "", reps: "", sets: "1" }] });
-  const updateSet = (i, val) => {
-    const sets = [...exercise.sets];
-    sets[i] = val;
-    onUpdate({ ...exercise, sets });
-  };
-  const removeSet = (i) => {
-    const sets = exercise.sets.filter((_, idx) => idx !== i);
-    onUpdate({ ...exercise, sets });
-  };
-
-  return (
-    <div style={styles.selectedItem(color)}>
-      <div style={styles.selectedHeader}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={styles.exDot(color)} />
-          <span style={styles.selectedName}>{exercise.name}</span>
-          <span style={{ fontSize: "10px", color: "#555", letterSpacing: "1px" }}>{exercise.category}</span>
-        </div>
-        <button style={styles.removeBtn} onClick={onRemove}>✕</button>
-      </div>
-      {exercise.sets.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr 1fr 1fr auto", gap: "6px", marginBottom: "6px" }}>
-          <span style={styles.setHeaderLabel}>#</span>
-          <span style={styles.setHeaderLabel}>kg</span>
-          <span style={styles.setHeaderLabel}>rep</span>
-          <span style={styles.setHeaderLabel}>set</span>
-          <span />
-        </div>
-      )}
-      <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-        {exercise.sets.map((set, i) => (
-          <ExerciseSet key={i} set={set} idx={i}
-            onChange={val => updateSet(i, val)}
-            onRemove={() => removeSet(i)} />
-        ))}
-      </div>
-      <button style={styles.addSetBtn} onClick={addSet}>＋ セット追加</button>
-    </div>
-  );
-}
-
-function WorkoutCard({ exercises, onAdd, onUpdate, onRemove }) {
-  const [activeCategory, setActiveCategory] = useState("胸");
-
-  return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <span style={styles.cardTitle}>💪 トレーニングメニュー</span>
-        <span style={{ fontSize: "12px", color: "#555" }}>{exercises.length}種目</span>
-      </div>
-      <div style={styles.cardBody}>
-        <div style={styles.catGrid}>
-          {Object.keys(EXERCISE_MENU).map(cat => (
-            <button key={cat} style={styles.catBtn(CATEGORY_COLORS[cat], activeCategory === cat)}
-              onClick={() => setActiveCategory(cat)}>
-              {cat}
-            </button>
-          ))}
-        </div>
-        <div style={styles.exList}>
-          {EXERCISE_MENU[activeCategory].map(name => {
-            const alreadyAdded = exercises.some(e => e.name === name);
+      <div style={{ background:"#fff", borderRadius:16, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.06)" }}>
+        <div style={sectionLabel}>📊 本日の合計</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
+          {[
+            { key:"protein", label:"タンパク質", unit:"g", color:"#10B981" },
+            { key:"fat",     label:"脂質",       unit:"g", color:"#F59E0B" },
+            { key:"calories",label:"カロリー",   unit:"kcal", color:"#FF5500" },
+          ].map(f => {
+            const total = Object.values(meals).reduce((s,m) => s+(parseFloat(m[f.key])||0), 0);
             return (
-              <div key={name}
-                style={{ ...styles.exItem(CATEGORY_COLORS[activeCategory]), opacity: alreadyAdded ? 0.4 : 1 }}
-                onClick={() => !alreadyAdded && onAdd(name, activeCategory)}>
-                <div style={styles.exDot(CATEGORY_COLORS[activeCategory])} />
-                <span style={styles.exName}>{name}</span>
-                {alreadyAdded
-                  ? <span style={{ fontSize: "11px", color: "#444" }}>追加済み</span>
-                  : <span style={{ fontSize: "18px", color: CATEGORY_COLORS[activeCategory], opacity: 0.6 }}>＋</span>}
+              <div key={f.key} style={{ textAlign:"center", background:"#F9F9F7", borderRadius:10, padding:12 }}>
+                <div style={{ fontSize:10, color:"#999", marginBottom:4 }}>{f.label}</div>
+                <div style={{ fontSize:22, fontWeight:900, color:f.color }}>{total}</div>
+                <div style={{ fontSize:10, color:"#ccc" }}>{f.unit}</div>
               </div>
             );
           })}
         </div>
-        {exercises.length > 0 && (
-          <>
-            <div style={{ height: "1px", background: "#1A1A1A", margin: "20px 0" }} />
-            <div style={{ fontSize: "11px", color: "#555", letterSpacing: "2px", marginBottom: "12px", textTransform: "uppercase" }}>
-              今日のメニュー
-            </div>
-            <div style={styles.selectedList}>
-              {exercises.map((ex, i) => (
-                <SelectedExercise key={i} exercise={ex}
-                  color={CATEGORY_COLORS[ex.category]}
-                  onUpdate={val => onUpdate(i, val)}
-                  onRemove={() => onRemove(i)} />
-              ))}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
 }
 
-function AnalysisCard({ exercises, nutrition, dateStr }) {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+// ===================== WORKOUT =====================
+function WorkoutTab({ dateStr }) {
+  const [exercises, setExercises] = useState(() => load(`kintan:${dateStr}`, defaultDay()).exercises || []);
+  const [activeCategory, setActiveCategory] = useState("胸");
+  const [analysis, setAnalysis] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
-  const analyze = async () => {
-    if (exercises.length === 0) { alert("トレーニングメニューを追加してください"); return; }
-    setLoading(true); setResult(null);
+  useEffect(() => {
+    setExercises(load(`kintan:${dateStr}`, defaultDay()).exercises || []);
+  }, [dateStr]);
 
-    const menuSummary = exercises.map(ex => {
-      const setsStr = ex.sets.map((s, i) => `第${i+1}セット: ${s.weight||"?"}kg × ${s.reps||"?"}回 × ${s.sets||1}セット`).join(", ");
-      return `【${ex.category}】${ex.name}: ${setsStr || "種目のみ記録"}`;
-    }).join("\n");
-
-    const nutriStr = [
-      nutrition.protein ? `タンパク質 ${nutrition.protein}g` : null,
-      nutrition.fat ? `脂質 ${nutrition.fat}g` : null,
-      nutrition.calories ? `カロリー ${nutrition.calories}kcal` : null,
-    ].filter(Boolean).join("、");
-
-    const prompt = `あなたはプロのフィジカルトレーナーです。以下の筋トレ記録を分析し、簡潔にフィードバックしてください。
-
-【日付】${dateStr}
-【トレーニング記録】
-${menuSummary}
-${nutriStr ? `【栄養摂取】${nutriStr}` : ""}
-
-以下の3点をそれぞれ2〜3文で答えてください：
-1. 今日の良かったポイント（strength）
-2. 次回意識して鍛えるべき点・改善ポイント（next_target）
-3. 栄養面のアドバイス（nutrition_advice）${!nutriStr ? "（記録なし。筋トレ内容から推奨量を提案）" : ""}
-
-必ずJSON形式のみで返してください。マークダウンや説明文は不要です。
-{"strength":"...","next_target":"...","nutrition_advice":"..."}`;
-
-    try {
-      // VercelにデプロイしたAPIエンドポイントを使用
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-      const data = await res.json();
-      const text = data.content?.find(c => c.type === "text")?.text || "{}";
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      setResult(parsed);
-    } catch (e) {
-      setResult({ strength: "分析中にエラーが発生しました。", next_target: "しばらくしてから再試行してください。", nutrition_advice: "" });
-    }
-    setLoading(false);
+  const persist = (exs) => {
+    setExercises(exs);
+    const d = load(`kintan:${dateStr}`, defaultDay());
+    store(`kintan:${dateStr}`, { ...d, exercises: exs });
   };
 
+  const doAnalyze = async () => {
+    if (!exercises.length) { alert("種目を追加してください"); return; }
+    setAnalyzing(true); setAnalysis(null);
+    const summary = exercises.map(ex => {
+      const s = ex.sets.map((s,i)=>`${i+1}セット:${s.weight||"?"}kg×${s.reps||"?"}回`).join(", ");
+      return `【${ex.category}】${ex.name}: ${s||"種目のみ"}`;
+    }).join("\n");
+    const prompt = `プロトレーナーとして分析してください。\n${summary}\n\n以下JSONのみ返してください:\n{"strength":"良かった点2文","next_target":"改善点2文","nutrition_advice":"栄養アドバイス2文"}`;
+    try {
+      const res = await fetch("/api/analyze", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:800, messages:[{role:"user",content:prompt}] }),
+      });
+      const data = await res.json();
+      const text = data.content?.find(c=>c.type==="text")?.text||"{}";
+      setAnalysis(JSON.parse(text.replace(/```json|```/g,"").trim()));
+    } catch { setAnalysis({ strength:"エラーが発生しました", next_target:"再試行してください", nutrition_advice:"" }); }
+    setAnalyzing(false);
+  };
+
+  const d = new Date(dateStr);
+
   return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <span style={styles.cardTitle}>🤖 AI 総括</span>
-        {result && <span style={{ fontSize: "10px", color: "#555" }}>Claude分析済み</span>}
+    <div className="tab-in" style={{ padding:"20px 16px", paddingBottom:100 }}>
+      <div style={{ fontWeight:900, fontSize:22, marginBottom:4 }}>💪 筋トレ記録</div>
+      <div style={{ fontSize:13, color:"#999", marginBottom:20 }}>{d.getMonth()+1}月{d.getDate()}日</div>
+
+      <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4, marginBottom:16 }}>
+        {Object.keys(EXERCISE_MENU).map(cat => (
+          <button key={cat} onClick={() => setActiveCategory(cat)} style={{
+            flexShrink:0, padding:"6px 14px", borderRadius:20, border:"none", cursor:"pointer",
+            background: activeCategory===cat ? CATEGORY_COLORS[cat] : "#fff",
+            color: activeCategory===cat ? "#fff" : CATEGORY_COLORS[cat],
+            fontWeight:700, fontSize:12, boxShadow:"0 1px 4px rgba(0,0,0,0.08)",
+            outline:`2px solid ${activeCategory===cat ? CATEGORY_COLORS[cat] : "transparent"}`,
+          }}>{cat}</button>
+        ))}
       </div>
-      <div style={styles.cardBody}>
-        <button style={styles.analyzeBtn(loading)} onClick={analyze} disabled={loading}>
-          {loading ? "⚡ 分析中..." : "⚡ 今日のトレを分析する"}
+
+      <div style={{ background:"#fff", borderRadius:16, overflow:"hidden",
+        boxShadow:"0 2px 12px rgba(0,0,0,0.06)", marginBottom:20 }}>
+        {EXERCISE_MENU[activeCategory].map((name, i) => {
+          const added = exercises.some(e => e.name === name);
+          return (
+            <div key={name} onClick={() => !added && persist([...exercises,{name,category:activeCategory,sets:[]}])} style={{
+              display:"flex", alignItems:"center", gap:12, padding:"14px 16px",
+              borderBottom: i<EXERCISE_MENU[activeCategory].length-1?"1px solid #F5F4F0":"none",
+              cursor: added?"default":"pointer", opacity: added?0.5:1,
+            }}>
+              <div style={{ width:10,height:10,borderRadius:"50%",background:CATEGORY_COLORS[activeCategory],flexShrink:0 }} />
+              <span style={{ fontSize:14, flex:1 }}>{name}</span>
+              {added
+                ? <span style={{ fontSize:11, color:"#ccc" }}>追加済み</span>
+                : <span style={{ fontSize:20, color:CATEGORY_COLORS[activeCategory], lineHeight:1 }}>+</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      {exercises.length > 0 && (
+        <div style={{ marginBottom:20 }}>
+          <div style={sectionLabel}>今日のメニュー</div>
+          {exercises.map((ex, i) => (
+            <ExerciseCard key={i} exercise={ex} color={CATEGORY_COLORS[ex.category]}
+              onUpdate={val => { const e=[...exercises]; e[i]=val; persist(e); }}
+              onRemove={() => persist(exercises.filter((_,idx)=>idx!==i))} />
+          ))}
+        </div>
+      )}
+
+      {exercises.length > 0 && (
+        <button onClick={doAnalyze} disabled={analyzing} style={{
+          width:"100%", padding:16, borderRadius:14, border:"none",
+          background: analyzing?"#E5E5E5":"linear-gradient(135deg,#FF5500,#FF8C00)",
+          color: analyzing?"#999":"#fff", fontSize:14, fontWeight:900,
+          cursor: analyzing?"not-allowed":"pointer", letterSpacing:2,
+          boxShadow: analyzing?"none":"0 4px 16px rgba(255,85,0,0.3)",
+        }}>
+          {analyzing ? "⚡ 分析中..." : "⚡ AIで今日を総括する"}
         </button>
-        {result && (
-          <div style={styles.analysisBox}>
-            <div style={styles.analysisSection}>
-              <div style={styles.analysisSectionTitle("#00FF88")}>
-                <span>▲</span> 良かったところ
-              </div>
-              <p style={styles.analysisText}>{result.strength}</p>
+      )}
+
+      {analysis && (
+        <div style={{ marginTop:16, background:"#fff", borderRadius:16, padding:20,
+          boxShadow:"0 2px 12px rgba(0,0,0,0.06)" }}>
+          {[
+            { key:"strength",         label:"✅ 良かったところ",   color:"#10B981" },
+            { key:"next_target",      label:"🎯 次回のターゲット", color:"#FF5500" },
+            { key:"nutrition_advice", label:"🥦 栄養アドバイス",   color:"#F59E0B" },
+          ].filter(s=>analysis[s.key]).map((s,i,arr) => (
+            <div key={s.key}>
+              <div style={{ fontSize:11, fontWeight:700, color:s.color, letterSpacing:1, marginBottom:6 }}>{s.label}</div>
+              <p style={{ fontSize:13, lineHeight:1.7, color:"#444", marginBottom:i<arr.length-1?16:0 }}>{analysis[s.key]}</p>
+              {i<arr.length-1 && <div style={{ height:1, background:"#F5F4F0", marginBottom:16 }} />}
             </div>
-            <div style={{ height: "1px", background: "#1A1A1A", margin: "12px 0" }} />
-            <div style={styles.analysisSection}>
-              <div style={styles.analysisSectionTitle("#FF5500")}>
-                <span>▶</span> 次回のターゲット
-              </div>
-              <p style={styles.analysisText}>{result.next_target}</p>
-            </div>
-            {result.nutrition_advice && (
-              <>
-                <div style={{ height: "1px", background: "#1A1A1A", margin: "12px 0" }} />
-                <div style={styles.analysisSection}>
-                  <div style={styles.analysisSectionTitle("#FFD600")}>
-                    <span>●</span> 栄養アドバイス
-                  </div>
-                  <p style={{ ...styles.analysisText, marginBottom: 0 }}>{result.nutrition_advice}</p>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+function ExerciseCard({ exercise, color, onUpdate, onRemove }) {
+  const addSet = () => onUpdate({ ...exercise, sets:[...exercise.sets,{weight:"",reps:"",sets:"1"}] });
+  const updateSet = (i,val) => { const s=[...exercise.sets]; s[i]=val; onUpdate({...exercise,sets:s}); };
+  const removeSet = (i) => onUpdate({ ...exercise, sets:exercise.sets.filter((_,idx)=>idx!==i) });
+
+  return (
+    <div style={{ background:"#fff", borderRadius:14, padding:16, marginBottom:10,
+      borderLeft:`4px solid ${color}`, boxShadow:"0 2px 8px rgba(0,0,0,0.06)" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <div style={{ width:8,height:8,borderRadius:"50%",background:color }} />
+          <span style={{ fontWeight:700, fontSize:14 }}>{exercise.name}</span>
+          <span style={{ fontSize:11, color:"#ccc" }}>{exercise.category}</span>
+        </div>
+        <button onClick={onRemove} style={{ border:"none",background:"none",color:"#ccc",cursor:"pointer",fontSize:16 }}>✕</button>
+      </div>
+
+      {exercise.sets.length > 0 && (
+        <div style={{ display:"grid", gridTemplateColumns:"20px 1fr 1fr 1fr 20px", gap:6, marginBottom:6 }}>
+          {["#","kg","rep","set",""].map((h,i) => (
+            <div key={i} style={{ fontSize:10, color:"#ccc", textAlign:"center" }}>{h}</div>
+          ))}
+        </div>
+      )}
+
+      {exercise.sets.map((set,i) => (
+        <div key={i} style={{ display:"grid", gridTemplateColumns:"20px 1fr 1fr 1fr 20px", gap:6, marginBottom:4 }}>
+          <div style={{ fontSize:11,color:"#ccc",textAlign:"center",paddingTop:7 }}>{i+1}</div>
+          {["weight","reps","sets"].map(field => (
+            <input key={field} type="number"
+              placeholder={field==="weight"?"重量":field==="reps"?"回数":"set数"}
+              value={set[field]}
+              onChange={e => updateSet(i,{...set,[field]:e.target.value})}
+              style={{ border:"1px solid #E5E5E5",borderRadius:8,padding:"6px",
+                textAlign:"center",fontSize:13,outline:"none",background:"#F9F9F7" }} />
+          ))}
+          <button onClick={()=>removeSet(i)} style={{ border:"none",background:"none",color:"#ddd",cursor:"pointer",fontSize:14 }}>×</button>
+        </div>
+      ))}
+
+      <button onClick={addSet} style={{ width:"100%",marginTop:8,padding:"7px",border:"1px dashed #E5E5E5",
+        borderRadius:8,background:"none",color:"#ccc",cursor:"pointer",fontSize:12 }}>
+        ＋ セット追加
+      </button>
+    </div>
+  );
+}
+
+// ===================== SETTINGS =====================
+function SettingsTab() {
+  const [profile, setProfile] = useState(() => load("kintan:profile", defaultProfile));
+  const [saved, setSaved] = useState(false);
+  const update = (key,val) => setProfile(p=>({...p,[key]:val}));
+  const save = () => { store("kintan:profile", profile); setSaved(true); setTimeout(()=>setSaved(false),2000); };
+
+  return (
+    <div className="tab-in" style={{ padding:"20px 16px", paddingBottom:100 }}>
+      <div style={{ fontWeight:900, fontSize:22, marginBottom:4 }}>⚙️ 設定</div>
+      <div style={{ fontSize:13, color:"#999", marginBottom:24 }}>プロフィールと目標</div>
+
+      <div style={{ background:"#fff", borderRadius:16, overflow:"hidden",
+        boxShadow:"0 2px 12px rgba(0,0,0,0.06)", marginBottom:16 }}>
+        <div style={{ padding:"14px 16px", borderBottom:"1px solid #F5F4F0",
+          fontSize:11, fontWeight:700, color:"#999", letterSpacing:2 }}>PROFILE</div>
+        {[
+          { key:"name",   label:"名前",  placeholder:"山田 太郎", type:"text" },
+          { key:"age",    label:"年齢",  placeholder:"25",        type:"number", unit:"歳" },
+          { key:"height", label:"身長",  placeholder:"170",       type:"number", unit:"cm" },
+          { key:"weight", label:"体重",  placeholder:"70",        type:"number", unit:"kg" },
+        ].map((f,i,arr) => (
+          <div key={f.key} style={{ display:"flex", alignItems:"center", padding:"14px 16px",
+            borderBottom:i<arr.length-1?"1px solid #F5F4F0":"none" }}>
+            <span style={{ fontSize:14,color:"#555",width:60 }}>{f.label}</span>
+            <input type={f.type} placeholder={f.placeholder} value={profile[f.key]}
+              onChange={e=>update(f.key,e.target.value)}
+              style={{ flex:1,border:"none",outline:"none",fontSize:14,
+                fontWeight:600,textAlign:"right",background:"transparent" }} />
+            {f.unit && <span style={{ fontSize:12,color:"#ccc",marginLeft:4 }}>{f.unit}</span>}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background:"#fff", borderRadius:16, overflow:"hidden",
+        boxShadow:"0 2px 12px rgba(0,0,0,0.06)", marginBottom:16 }}>
+        <div style={{ padding:"14px 16px", borderBottom:"1px solid #F5F4F0",
+          fontSize:11, fontWeight:700, color:"#999", letterSpacing:2 }}>GOAL</div>
+        <div style={{ padding:"14px 16px", borderBottom:"1px solid #F5F4F0" }}>
+          <div style={{ fontSize:14,color:"#555",marginBottom:12 }}>トレーニング目標</div>
+          <div style={{ display:"flex", gap:8 }}>
+            {["減量","筋肥大","維持"].map(g => (
+              <button key={g} onClick={()=>update("goal",g)} style={{
+                flex:1, padding:"10px 0", borderRadius:10, border:"none", cursor:"pointer",
+                background:profile.goal===g?"#FF5500":"#F5F4F0",
+                color:profile.goal===g?"#fff":"#555",
+                fontWeight:700, fontSize:13, transition:"all 0.15s",
+              }}>{g}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", padding:"14px 16px" }}>
+          <span style={{ fontSize:14,color:"#555",flex:1 }}>週トレ目標</span>
+          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            <button onClick={()=>update("weeklyTarget",Math.max(1,profile.weeklyTarget-1))}
+              style={{ width:32,height:32,borderRadius:"50%",border:"1px solid #E5E5E5",
+                background:"#F5F4F0",cursor:"pointer",fontSize:18 }}>−</button>
+            <span style={{ fontWeight:900,fontSize:22,width:24,textAlign:"center" }}>{profile.weeklyTarget}</span>
+            <button onClick={()=>update("weeklyTarget",Math.min(7,profile.weeklyTarget+1))}
+              style={{ width:32,height:32,borderRadius:"50%",border:"1px solid #E5E5E5",
+                background:"#F5F4F0",cursor:"pointer",fontSize:18 }}>+</button>
+            <span style={{ fontSize:12,color:"#ccc" }}>日/週</span>
+          </div>
+        </div>
+      </div>
+
+      <button onClick={save} style={{
+        width:"100%", padding:16, borderRadius:14, border:"none",
+        background:saved?"#10B981":"#1A1A1A",
+        color:"#fff", fontSize:14, fontWeight:900, cursor:"pointer",
+        transition:"background 0.3s", letterSpacing:2,
+      }}>
+        {saved ? "✓ 保存しました" : "保存する"}
+      </button>
+    </div>
+  );
+}
+
+// ===================== BOTTOM NAV =====================
+const NAV_ITEMS = [
+  { key:"home",     icon:"🏠", label:"ホーム" },
+  { key:"calendar", icon:"📅", label:"カレンダー" },
+  { key:"meals",    icon:"🍽️", label:"食事" },
+  { key:"workout",  icon:"💪", label:"筋トレ" },
+  { key:"settings", icon:"⚙️", label:"設定" },
+];
 
 // ===================== MAIN APP =====================
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [currentDate, setCurrentDate] = useState(todayStr());
-  const [dayData, setDayData] = useState({ exercises: [], nutrition: { protein: "", fat: "", calories: "" } });
+  const [activeTab, setActiveTab] = useState("home");
+  const [selectedDate, setSelectedDate] = useState(todayStr());
 
-  useEffect(() => {
-    setDayData(loadDay(currentDate));
-  }, [currentDate]);
-
-  const persist = useCallback((data) => {
-    setDayData(data);
-    saveDay(currentDate, data);
-  }, [currentDate]);
-
-  const changeDate = (delta) => {
-    const d = new Date(currentDate);
-    d.setDate(d.getDate() + delta);
-    setCurrentDate(d.toISOString().slice(0, 10));
-  };
-
-  const addExercise = (name, category) => {
-    persist({ ...dayData, exercises: [...dayData.exercises, { name, category, sets: [] }] });
-  };
-  const updateExercise = (i, val) => {
-    const exercises = [...dayData.exercises]; exercises[i] = val;
-    persist({ ...dayData, exercises });
-  };
-  const removeExercise = (i) => {
-    persist({ ...dayData, exercises: dayData.exercises.filter((_, idx) => idx !== i) });
-  };
-  const updateNutrition = (nutrition) => persist({ ...dayData, nutrition });
-
-  if (showSplash) {
-    return <SplashScreen onFinish={() => setShowSplash(false)} />;
-  }
-
-  const d = new Date(currentDate);
-  const isToday = currentDate === todayStr();
-  const formattedDate = `${d.getMonth() + 1}月${d.getDate()}日`;
-  const weekday = WEEKDAYS[d.getDay()];
+  if (showSplash) return <SplashScreen onFinish={() => setShowSplash(false)} />;
 
   return (
-    <div style={styles.app}>
-      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;900&display=swap" rel="stylesheet" />
-      <header style={styles.header}>
-        <div>
-          <div style={styles.logo}>KINTAN</div>
-          <div style={styles.tagline}>筋トレ計測アプリ</div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: "11px", color: "#444", letterSpacing: "2px" }}>POWERED BY</div>
-          <div style={{ fontSize: "11px", color: "#FF5500", letterSpacing: "1px", fontWeight: 700 }}>CLAUDE AI</div>
-        </div>
-      </header>
-      <main style={styles.main}>
-        <div style={styles.dateBar}>
-          <button style={styles.dateBtn} onClick={() => changeDate(-1)}>‹</button>
-          <div style={styles.dateDisplay}>
-            <div style={styles.dateMain}>
-              {formattedDate} <span style={{ fontSize: "16px", color: "#888" }}>({weekday})</span>
-            </div>
-            {isToday && <div style={styles.dateWeekday}>Today</div>}
+    <>
+      <style>{G}</style>
+      <div style={{ maxWidth:480, margin:"0 auto", minHeight:"100vh", background:"#F5F4F0", position:"relative" }}>
+
+        {/* Header */}
+        <div style={{ background:"#fff", padding:"16px 20px 12px",
+          borderBottom:"1px solid #F0EDE8", position:"sticky", top:0, zIndex:50 }}>
+          <div style={{ fontWeight:900, fontSize:22, letterSpacing:-1,
+            background:"linear-gradient(135deg,#FF5500,#FF8C00)",
+            WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
+            KINTAN 💪
           </div>
-          <button style={{ ...styles.dateBtn, opacity: isToday ? 0.3 : 1 }}
-            onClick={() => !isToday && changeDate(1)} disabled={isToday}>›</button>
+          <div style={{ fontSize:11, color:"#ccc", letterSpacing:2, marginTop:1 }}>
+            {NAV_ITEMS.find(n=>n.key===activeTab)?.label.toUpperCase()}
+          </div>
         </div>
-        <NutritionCard nutrition={dayData.nutrition} onChange={updateNutrition} />
-        <WorkoutCard
-          exercises={dayData.exercises}
-          onAdd={addExercise}
-          onUpdate={updateExercise}
-          onRemove={removeExercise}
-        />
-        <AnalysisCard
-          exercises={dayData.exercises}
-          nutrition={dayData.nutrition}
-          dateStr={`${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} (${weekday})`}
-        />
-        <div style={{ height: "40px" }} />
-      </main>
-    </div>
+
+        {/* Content */}
+        <div>
+          {activeTab==="home"     && <HomeTab onNavigate={setActiveTab} />}
+          {activeTab==="calendar" && <CalendarTab onSelectDate={setSelectedDate} selectedDate={selectedDate} />}
+          {activeTab==="meals"    && <MealsTab dateStr={selectedDate} />}
+          {activeTab==="workout"  && <WorkoutTab dateStr={selectedDate} />}
+          {activeTab==="settings" && <SettingsTab />}
+        </div>
+
+        {/* Bottom Nav */}
+        <div style={{ position:"fixed", bottom:0, left:"50%", transform:"translateX(-50%)",
+          width:"100%", maxWidth:480, background:"#fff",
+          borderTop:"1px solid #F0EDE8", display:"flex",
+          padding:"8px 0 8px", zIndex:100,
+          boxShadow:"0 -4px 20px rgba(0,0,0,0.06)" }}>
+          {NAV_ITEMS.map(item => (
+            <button key={item.key} onClick={() => setActiveTab(item.key)} style={{
+              flex:1, border:"none", background:"none", cursor:"pointer",
+              display:"flex", flexDirection:"column", alignItems:"center", gap:2, padding:"4px 0",
+            }}>
+              <span style={{ fontSize:22 }}>{item.icon}</span>
+              <span style={{ fontSize:10, fontWeight:activeTab===item.key?700:400,
+                color:activeTab===item.key?"#FF5500":"#ccc" }}>{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
